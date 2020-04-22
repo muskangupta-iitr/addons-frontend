@@ -8,10 +8,25 @@
   width: 100%;
 }
 
+.RatingsByStar-table {
+  display: table;
+}
+
+.RatingsByStar-table a {
+  color: $grey-50;
+  text-decoration: underline;
+}
+
 .RatingByStar-table-row {
+  display: table-row;
+
   &:hover {
     cursor: pointer;
   }
+}
+
+.RatingsByStar-table-cell {
+  display: table-cell;
 }
 
 .RatingsByStar-star {

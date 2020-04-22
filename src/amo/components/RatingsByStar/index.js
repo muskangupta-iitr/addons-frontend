@@ -4,7 +4,7 @@ import invariant from 'invariant';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
-import { withRouter } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 
 import { fetchGroupedRatings } from 'amo/actions/reviews';
 import { reviewListURL } from 'amo/reducers/reviews';
@@ -18,10 +18,7 @@ import type { AddonType } from 'core/types/addons';
 import type { ErrorHandlerType } from 'core/errorHandler';
 import type { I18nType } from 'core/types/i18n';
 import type { DispatchFunc } from 'core/types/redux';
-import type {
-  ReactRouterHistoryType,
-  ReactRouterLocationType,
-} from 'core/types/router';
+import type { ReactRouterLocationType } from 'core/types/router';
 
 import './styles.scss';
 
@@ -35,11 +32,32 @@ type InternalProps = {|
   dispatch: DispatchFunc,
   errorHandler: ErrorHandlerType,
   groupedRatings?: GroupedRatingsType,
-  history: ReactRouterHistoryType,
   i18n: I18nType,
   location: ReactRouterLocationType,
   siteLang: string,
 |};
+
+type WrappingLinkProps = {|
+  styleClass: string,
+  children: React.Node,
+  rowProps: {
+    title: string,
+    link: string,
+  },
+|};
+
+function WrappingLink(props: WrappingLinkProps) {
+  const { styleClass, children, rowProps } = props;
+
+  if (Object.keys(rowProps).length > 0) {
+    return (
+      <Link to={rowProps.link} className={styleClass} title={rowProps.title}>
+        {children}
+      </Link>
+    );
+  }
+  return <div className={styleClass}>{children}</div>;
+}
 
 export class RatingsByStarBase extends React.Component<InternalProps> {
   constructor(props: InternalProps) {
@@ -91,24 +109,17 @@ export class RatingsByStarBase extends React.Component<InternalProps> {
     );
   }
 
-  handleRouting(star: string) {
-    const { addon, location, history, clientApp, siteLang } = this.props;
-
-    invariant(addon, 'addon was unexpectedly empty');
-
-    history.push(
-      `/${siteLang}/${clientApp}${reviewListURL({
-        addonSlug: addon.slug,
-        score: star,
-        src: location.query.src,
-      })}`,
-    );
-  }
-
   render() {
-    const { addon, errorHandler, i18n, groupedRatings } = this.props;
+    const {
+      addon,
+      errorHandler,
+      i18n,
+      groupedRatings,
+      location,
+      siteLang,
+      clientApp,
+    } = this.props;
     const loading = (!addon || !groupedRatings) && !errorHandler.hasError();
-    const self = this;
 
     const getLinkTitle = (star, count = '') => {
       switch (star) {
@@ -143,17 +154,21 @@ export class RatingsByStarBase extends React.Component<InternalProps> {
         loading || !addon
           ? {}
           : {
-              onClick: () => self.handleRouting(star),
+              link: `/${siteLang}/${clientApp}${reviewListURL({
+                addonSlug: addon.slug,
+                score: star,
+                src: location.query.src,
+              })}`,
               title: getLinkTitle(star, starCount),
             };
 
       return (
-        <tr className="RatingByStar-table-row" {...rowProps}>
-          <td className="RatingsByStar-star">
+        <WrappingLink styleClass="RatingByStar-table-row" rowProps={rowProps}>
+          <div className="RatingsByStar-star RatingsByStar-table-cell">
             {!loading ? i18n.formatNumber(star) : <LoadingText width={100} />}
             <IconStar selected />
-          </td>
-          <td className="RatingsByStar-barContainer">
+          </div>
+          <div className="RatingsByStar-barContainer RatingsByStar-table-cell">
             {loading ? (
               <div className="RatingsByStar-bar RatingsByStar-barFrame" />
             ) : (
@@ -163,28 +178,24 @@ export class RatingsByStarBase extends React.Component<InternalProps> {
                   : null}
               </div>
             )}
-          </td>
-          <td className="RatingsByStar-count">
+          </div>
+          <div className="RatingsByStar-count RatingsByStar-table-cell">
             {loading ? <LoadingText width={100} /> : starCountNode}
-          </td>
-        </tr>
+          </div>
+        </WrappingLink>
       );
     };
 
     return (
       <div className="RatingsByStar">
         {errorHandler.renderErrorIfPresent()}
-        <table className="RatingsByStar-graph">
-          <tbody>
-            {['5', '4', '3', '2', '1'].map((star) => {
-              return (
-                <React.Fragment key={star}>
-                  {createTableRow(star)}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="RatingsByStar-graph RatingsByStar-table">
+          {['5', '4', '3', '2', '1'].map((star) => {
+            return (
+              <React.Fragment key={star}>{createTableRow(star)}</React.Fragment>
+            );
+          })}
+        </div>
       </div>
     );
   }

@@ -11,7 +11,6 @@ import { ErrorHandler } from 'core/errorHandler';
 import { createInternalAddon } from 'core/reducers/addons';
 import {
   createContextWithFakeRouter,
-  createFakeEvent,
   createFakeHistory,
   createFakeLocation,
   dispatchClientMetadata,
@@ -167,17 +166,10 @@ describe(__filename, () => {
     const tableRow = root.find('.RatingByStar-table-row');
 
     function validateLink(row, score, expectedTitle) {
-      expect(row).toHaveProp('onClick');
-
-      row.simulate('click', createFakeEvent());
-      sinon.assert.calledWith(
-        fakeHistory.push,
-        `/${lang}/${clientApp}${reviewListURL({
-          addonSlug: addon.slug,
-          score,
-        })}`,
+      expect(row).toHaveProp(
+        'to',
+        `/${lang}/${clientApp}/${reviewListURL({ addonSlug: addon.slug, score })}`,
       );
-
       expect(row).toHaveProp('title', expectedTitle);
 
       const count = row.find('.RatingsByStar-star');
@@ -243,15 +235,9 @@ describe(__filename, () => {
     const tableRow = root.find('.RatingByStar-table-row');
 
     function validateLink(row, score) {
-      row.simulate('click', createFakeEvent());
-
-      sinon.assert.calledWith(
-        fakeHistory.push,
-        `/${lang}/${clientApp}${reviewListURL({
-          addonSlug: addon.slug,
-          score,
-          src,
-        })}`,
+        expect(row).toHaveProp(
+        'to',
+        `/${lang}/${clientApp}/${reviewListURL({ addonSlug: addon.slug, score, src })}`,
       );
     }
 
